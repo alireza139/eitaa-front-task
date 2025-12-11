@@ -2,17 +2,17 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchUsers } from "../api/users";
 import useUsersStore from "../store/useUsersStore";
+import type { User } from "../type/User";
 
 function Users() {
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("name");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"name" | "email" | "city">("name");
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 5;
 
-  // Zustand
   const setSelectedUserId = useUsersStore((state) => state.setSelectedUserId);
 
-  const { data: users = [], isLoading, isError, refetch } = useQuery({
+  const { data: users = [], isLoading, isError, refetch } = useQuery<User[]>({
     queryKey: ["users"],
     queryFn: fetchUsers,
   });
@@ -25,7 +25,10 @@ function Users() {
     return (
       <div className="text-center mt-10">
         <p className="text-red-500 text-xl">Failed to load users. Please try again.</p>
-        <button onClick={refetch} className="mt-4 px-4 py-2 bg-gray-800 text-white rounded">
+        <button
+          onClick={() => refetch()}
+          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
+        >
           Retry
         </button>
       </div>
@@ -34,16 +37,16 @@ function Users() {
 
   // Filter + Sort
   const filteredUsers = users
-    .filter(
-      (user) =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase()) ||
-        user.address?.city?.toLowerCase().includes(search.toLowerCase())
+    .filter((user: User) =>
+      user.name.toLowerCase().includes(search.toLowerCase()) ||
+      user.email.toLowerCase().includes(search.toLowerCase()) ||
+      user.address?.city?.toLowerCase().includes(search.toLowerCase())
     )
-    .sort((a, b) => {
+    .sort((a: User, b: User) => {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       if (sortBy === "email") return a.email.localeCompare(b.email);
-      if (sortBy === "city") return (a.address?.city || "").localeCompare(b.address?.city || "");
+      if (sortBy === "city")
+        return (a.address?.city || "").localeCompare(b.address?.city || "");
       return 0;
     });
 
@@ -55,11 +58,16 @@ function Users() {
   );
 
   // Highlight
-  const highlightText = (text, query) => {
+  const highlightText = (text: string, query: string) => {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, "gi");
+
     return text.split(regex).map((part, i) =>
-      regex.test(part) ? <span key={i} className="bg-yellow-200">{part}</span> : part
+      regex.test(part) ? (
+        <span key={i} className="bg-yellow-200">{part}</span>
+      ) : (
+        part
+      )
     );
   };
 
@@ -74,12 +82,13 @@ function Users() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+
         <div className="flex items-center gap-2">
           <label>Sort by:</label>
           <select
             className="border rounded-xl p-1"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => setSortBy(e.target.value as "name" | "email" | "city")}
           >
             <option value="name">Name</option>
             <option value="email">Email</option>
@@ -100,16 +109,29 @@ function Users() {
         </thead>
 
         <tbody className="divide-y divide-gray-200">
-          {paginatedUsers.map((user) => (
+          {paginatedUsers.map((user: User) => (
             <tr
               key={user.id}
               onClick={() => setSelectedUserId(user.id)}
               className="cursor-pointer hover:bg-gray-50"
             >
-              <td className="px-4 py-3"><p className="line-clamp-1">{highlightText(user.name, search)}</p></td>
-              <td className="px-4 py-3 hidden lg:table-cell"><p className="line-clamp-1">{highlightText(user.email, search)}</p></td>
-              <td className="px-4 py-3 hidden md:table-cell"><p className="line-clamp-1">@{user.username}</p></td>
-              <td className="px-4 py-3"><p className="line-clamp-1">{highlightText(user.address?.city || "-", search)}</p></td>
+              <td className="px-4 py-3">
+                <p className="line-clamp-1">{highlightText(user.name, search)}</p>
+              </td>
+
+              <td className="px-4 py-3 hidden lg:table-cell">
+                <p className="line-clamp-1">{highlightText(user.email, search)}</p>
+              </td>
+
+              <td className="px-4 py-3 hidden md:table-cell">
+                <p className="line-clamp-1">@{user.username}</p>
+              </td>
+
+              <td className="px-4 py-3">
+                <p className="line-clamp-1">
+                  {highlightText(user.address?.city || "-", search)}
+                </p>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -128,7 +150,8 @@ function Users() {
           <button
             key={page}
             onClick={() => setCurrentPage(page)}
-            className={`px-3 py-1 border rounded hover:bg-gray-200 ${page === currentPage ? "bg-blue-600 text-white" : ""}`}
+            className={`px-3 py-1 border rounded hover:bg-gray-200 ${page === currentPage ? "bg-blue-600 text-white" : ""
+              }`}
           >
             {page}
           </button>

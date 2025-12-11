@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchPostsByUser } from "../api/posts";
 import useUsersStore from "../store/useUsersStore";
+import type { Post } from "../type/post";
 
 function Posts() {
-  // ✅ گرفتن userId از Zustand
   const selectedUserId = useUsersStore((state) => state.selectedUserId);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 4;
 
   const {
@@ -16,11 +16,15 @@ function Posts() {
     isError,
     refetch,
     isFetching,
-  } = useQuery({
+  } = useQuery<Post[]>({
     queryKey: ["posts", selectedUserId],
-    queryFn: () => fetchPostsByUser(selectedUserId),
+    queryFn: () =>
+      selectedUserId
+        ? fetchPostsByUser(selectedUserId)
+        : Promise.resolve([]),
+
     enabled: !!selectedUserId,
-    keepPreviousData: true,
+    placeholderData: (prev: Post[] | undefined = []) => prev,
   });
 
   const posts = data ?? [];
@@ -33,6 +37,7 @@ function Posts() {
     );
   }
 
+  // Loading
   if (isLoading) {
     return (
       <h1 className="text-center text-gray-500 text-2xl mt-10">
@@ -41,21 +46,23 @@ function Posts() {
     );
   }
 
+  // Error
   if (isError) {
     return (
       <div className="text-center mt-10">
         <p className="text-red-500 text-lg">Failed to load posts</p>
         <button
-          onClick={refetch}
+          onClick={() => refetch()}
           className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
         >
           Retry
         </button>
+
       </div>
     );
   }
 
-  // Pagination
+  // Pagination logic
   const totalPages = Math.ceil(posts.length / itemsPerPage);
   const paginatedPosts = posts.slice(
     (currentPage - 1) * itemsPerPage,
@@ -67,11 +74,12 @@ function Posts() {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">Posts of User #{selectedUserId}</h2>
         <button
-          onClick={refetch}
+          onClick={() => refetch()}
           className="px-3 py-1 text-sm text-gray-600 border rounded"
         >
           {isFetching ? "Refreshing..." : "Refetch"}
         </button>
+
       </div>
 
       <table className="w-full border border-gray-200 rounded-lg">
@@ -96,7 +104,7 @@ function Posts() {
             ))
           ) : (
             <tr>
-              <td colSpan="2" className="text-center py-4 text-gray-500">
+              <td colSpan={2} className="text-center py-4 text-gray-500">
                 No posts found
               </td>
             </tr>
@@ -118,16 +126,17 @@ function Posts() {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`px-3 py-1 border rounded hover:bg-gray-200 ${
-                page === currentPage ? "bg-blue-600 text-white" : ""
-              }`}
+              className={`px-3 py-1 border rounded hover:bg-gray-200 ${page === currentPage ? "bg-blue-600 text-white" : ""
+                }`}
             >
               {page}
             </button>
           ))}
 
           <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
             className="px-3 py-1 border rounded hover:bg-gray-200"
           >
             Next
