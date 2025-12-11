@@ -9,7 +9,7 @@ function Header() {
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
 
   return (
-    <header className="bg-orange-600 dark:bg-gray-700 w-full h-22 md:h-30">
+    <header className="bg-orange-700 dark:bg-gray-700 max-w-[1800px] mx-auto h-22 md:h-30">
       <div className="header-top hidden md:flex items-center justify-between bg-orange-100 dark:bg-gray-500 w-[98%] h-20 px-5 mx-4 rounded-b-xl">
         <ul className="hidden md:flex md:gap-x-8 lg:gap-x-14 lg:text-xl w-full justify-center text-gray-600 dark:text-white">
           <li><a href="#">Home</a></li>
